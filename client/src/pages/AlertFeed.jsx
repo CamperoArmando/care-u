@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import '../styles/theme.css';
+import '../styles/alerts-red.css';  // 🔥 Importa el tema rojo
 import AlertCard from '../components/AlertCard';
 import CategoryFilter from '../components/CategoryFilter';
 import { listCategories, listAlert } from '../api/alerts';
@@ -58,14 +59,24 @@ export default function Feed() {
   }
 
   return (
-    <div className="container">
-      <div className="card" style={{ maxWidth: 860, width: '100%' }}>
-        <div className="brand"><span className="dot" /><h1>CARE-U</h1></div>
+    <div className="alerts-red-bg">
+      <div className="alerts-red-card" style={{ maxWidth: 860, width: '100%' }}>
+
+        <div className="brand">
+          <span className="dot" />
+          <h1>CARE-U</h1>
+        </div>
+
         <h2>Feed de Alertas</h2>
         <p className="helper">Filtra por categoría o busca por texto</p>
 
         <div className="row" style={{ gap: 12, marginBottom: 12 }}>
-          <CategoryFilter categories={cats} value={category} onChange={setCategory} />
+          <CategoryFilter 
+            categories={cats} 
+            value={category} 
+            onChange={setCategory} 
+          />
+
           <form onSubmit={onSearch} style={{ display: 'flex', gap: 12 }}>
             <input
               className="input"
@@ -73,7 +84,7 @@ export default function Feed() {
               value={q}
               onChange={e => setQ(e.target.value)}
             />
-            <button className="btn" disabled={loading}>
+            <button className="alerts-red-btn" disabled={loading}>
               {loading ? 'Buscando…' : 'Buscar'}
             </button>
           </form>
@@ -87,19 +98,34 @@ export default function Feed() {
               key={p._id}
               alert={p}
               onChanged={() => fetchData(page)}
-              isResolved={p.status === 'resolved'} // Prop para determinar si la publicación está resuelta
+              isResolved={p.status === 'resolved'}
             />
           ))}
-          {!loading && items.length === 0 && <div className="helper">Sin resultados</div>}
+
+          {!loading && items.length === 0 && (
+            <div className="helper">Sin resultados</div>
+          )}
         </div>
 
         <div style={{ display: 'flex', gap: 10, marginTop: 16, justifyContent: 'flex-end' }}>
-          <button className="btn" disabled={page <= 1 || loading} onClick={() => fetchData(page - 1)}>Anterior</button>
-          <button className="btn" disabled={page >= pages || loading} onClick={() => fetchData(page + 1)}>Siguiente</button>
+          <button 
+            className="alerts-red-btn"
+            disabled={page <= 1 || loading}
+            onClick={() => fetchData(page - 1)}
+          >
+            Anterior
+          </button>
+
+          <button 
+            className="alerts-red-btn"
+            disabled={page >= pages || loading}
+            onClick={() => fetchData(page + 1)}
+          >
+            Siguiente
+          </button>
         </div>
       </div>
 
-      {/* Campana flotante */}
       <NotificationsBell />
     </div>
   );

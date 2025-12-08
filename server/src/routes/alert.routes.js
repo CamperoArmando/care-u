@@ -8,9 +8,11 @@ import mongoose from 'mongoose';
 const router = Router();
 
 // HU03 — Crear incidencia
+// HU03 — Crear Alerta y notificar a todos
 router.post('/', requireAuth, async (req, res) => {
   try {
     const { text, category, location } = req.body;
+
     if (!text || !category || !location?.label) {
       return res.status(400).json({ error: 'Missing fields' });
     }
@@ -18,6 +20,7 @@ router.post('/', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Invalid category' });
     }
 
+    // 1️⃣ Crear la alerta
     const doc = await Alert.create({
       user: req.user.id,
       text,
@@ -26,12 +29,32 @@ router.post('/', requireAuth, async (req, res) => {
     });
 
     const populated = await doc.populate('user', 'name role');
-    res.status(201).json({ Alert: populated });
+
+    // 2️⃣ Obtener todos los usuarios
+    const users = await mongoose.model("User").find().select("_id");
+
+    // 3️⃣ Crear notificación para cada usuario
+    const notis = users.map(u => ({
+      user: u._id,
+      type: 'alert',  // 🔔 tipo de notificación
+      payload: {
+        alertId: doc._id.toString(),
+        text: doc.text,
+        category: doc.category,
+        creator: populated.user.name
+      }
+    }));
+
+    await Notification.insertMany(notis);
+
+    // Respuesta final
+    res.status(201).json({ alert: populated });
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: 'Server error' });
   }
 });
+
 
 // **Nueva ruta para obtener las categorías** (esto es lo que falta)
 router.get('/categories', (req, res) => {

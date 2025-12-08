@@ -29,6 +29,8 @@ export default function Dashboard() {
           <Link className="btn" to="/new">Reportar incidencia</Link>
           <Link className="btn" to="/feed">Ver feed de incidencias</Link>
           <Link className="btn" to="/profile">Editar perfil</Link>
+          <Link className="btn" to="/create-alert">Crear alerta</Link>
+          <Link className="btn" to="/alert-feed">Ver alertas</Link>
 
           <button className="btn" onClick={logout}>Cerrar sesión</button>
 
