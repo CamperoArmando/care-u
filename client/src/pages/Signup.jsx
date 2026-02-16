@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import AuthCard from '../components/AuthCard';
-import { http } from '../api/http';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
+import { auth } from '../firebase'; // Asegúrate de que apunta a tu archivo firebaseConfig
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 
 export default function Signup() {
   const nav = useNavigate();
   const { login } = useAuth();
-  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'student' }); // Por defecto 'student'
+  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'student' });
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState({ type: null, text: '' });
 
@@ -17,14 +18,26 @@ export default function Signup() {
     e.preventDefault();
     setMsg({ type: null, text: '' });
     setLoading(true);
+
     try {
-      const { data } = await http.post('/auth/register', form);
-      login(data.user, data.token);
+      // Crear usuario en Firebase
+      const userCredential = await createUserWithEmailAndPassword(auth, form.email, form.password);
+
+      // Actualizar nombre del usuario en Firebase
+      await updateProfile(userCredential.user, { displayName: form.name });
+
+      // Guardar en contexto local (login)
+      login(
+        { uid: userCredential.user.uid, email: form.email, name: form.name, role: form.role },
+        null // token no es necesario manejarlo aquí con Firebase Auth
+      );
+
       nav('/dashboard');
     } catch (err) {
-      const api = err?.response?.data?.error;
-      const text =
-        api === 'Email already registered' ? 'El correo ya está registrado' : api || 'Error del servidor';
+      let text = 'Error del servidor';
+      if (err.code === 'auth/email-already-in-use') text = 'El correo ya está registrado';
+      else if (err.code === 'auth/invalid-email') text = 'Correo no válido';
+      else if (err.code === 'auth/weak-password') text = 'La contraseña es muy débil';
       setMsg({ type: 'error', text });
     } finally {
       setLoading(false);
@@ -62,7 +75,6 @@ export default function Signup() {
           required
         />
         <div className="row cols-2">
-          {/* Campo para seleccionar el rol */}
           <select className="input" name="role" value={form.role} onChange={onChange}>
             <option value="student">Estudiante</option>
             <option value="staff">Personal</option>
