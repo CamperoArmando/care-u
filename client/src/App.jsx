@@ -12,9 +12,12 @@ import CreateAlert from './pages/CreateAlert';
 import AlertFeed from './pages/AlertFeed';  // Nuevo
 
 function PrivateRoute({ children }){
-  const { token } = useAuth();
-  return token ? children : <Navigate to="/login" replace />;
+  const { token, user } = useAuth();
+
+  // si hay usuario O token, permite acceso
+  return (user || token) ? children : <Navigate to="/login" replace />;
 }
+
 
 export default function App(){
   return (
