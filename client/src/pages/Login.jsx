@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import AuthCard from '../components/AuthCard';
-import { http } from '../api/http';
 import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
+
+import { auth } from '../firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 
 export default function Login() {
   const nav = useNavigate();
@@ -17,17 +19,40 @@ export default function Login() {
     e.preventDefault();
     setMsg({ type:null, text:'' });
     setLoading(true);
+
     try{
-      const { data } = await http.post('/auth/login', form);
-      login(data.user, data.token);
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        form.email,
+        form.password
+      );
+
+      login(
+        {
+          uid: userCredential.user.uid,
+          email: userCredential.user.email,
+          name: userCredential.user.displayName || '',
+          role: 'student'
+        },
+        null
+      );
+
       nav('/dashboard');
+
     }catch(err){
-      const api = err?.response?.data?.error;
-      const text = api === 'Invalid credentials'
-        ? 'Credenciales inválidas'
-        : (api || 'Error del servidor');
+      let text = 'Error al iniciar sesión';
+
+      if (err.code === 'auth/user-not-found')
+        text = 'Usuario no registrado';
+      else if (err.code === 'auth/wrong-password')
+        text = 'Contraseña incorrecta';
+      else if (err.code === 'auth/invalid-email')
+        text = 'Correo inválido';
+
       setMsg({ type:'error', text });
-    }finally{ setLoading(false); }
+    }finally{
+      setLoading(false);
+    }
   }
 
   return (
@@ -38,6 +63,7 @@ export default function Login() {
         <button className="btn" disabled={loading}>{loading ? 'Ingresando…' : 'Iniciar sesión'}</button>
         {msg.text && <div className={msg.type === 'error' ? 'error':'success'}>{msg.text}</div>}
       </form>
+
       <div className="footer-link">
         <span className="helper">¿No tienes cuenta? </span>
         <Link to="/signup">Regístrate</Link>
