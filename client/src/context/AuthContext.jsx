@@ -1,24 +1,27 @@
-import { createContext, useContext, useEffect, useState } from 'react'; 
+import { createContext, useContext, useEffect, useState } from 'react';
 import { setAuthToken } from '../api/http';
 
 const AuthCtx = createContext(null);
 
 export function AuthProvider({ children }) {
+
   const [auth, setAuth] = useState(() => {
     const raw = localStorage.getItem('careu_auth');
     return raw ? JSON.parse(raw) : { user: null, token: null };
   });
 
-  // 🔥 Cargar token guardado al iniciar la app
+  // cargar sesión guardada correctamente
   useEffect(() => {
-    if (auth.token) {
-      setAuthToken(auth.token);
-    }
-  }, []);
+    if (auth?.token) setAuthToken(auth.token);
+  }, [auth.token]);
 
-  const login = (user, token) => {
-    localStorage.setItem('careu_auth', JSON.stringify({ user, token }));
-    setAuth({ user, token });
+  const login = (user, token = 'firebase') => {
+
+    // 👇 IMPORTANTE: ahora SIEMPRE habrá token
+    const session = { user, token };
+
+    localStorage.setItem('careu_auth', JSON.stringify(session));
+    setAuth(session);
     setAuthToken(token);
   };
 
